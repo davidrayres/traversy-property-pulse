@@ -1,14 +1,13 @@
 import Hero from '@/components/Hero'
 import InfoBoxes from '@/components/InfoBoxes'
-import Image from 'next/image'
 import HomeProperties from '@/components/HomeProperties'
 
-export default function Home() {
+export default function HomePage() {
   return (
     <>
       <Hero />
       <InfoBoxes />
-      <HomeProperties/>
+      <HomeProperties />
     </>
   )
 }
