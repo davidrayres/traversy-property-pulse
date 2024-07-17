@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import 'photoswipe/dist/photoswipe.css'
 
 export const metadata = {
-  title: 'PropertyPulse | Find The Perfect Rental',
+  title: 'PropertyPulse | V4',
   description: 'Find your dream rental property',
   keywords: 'rental, find rentals, find properties',
 }
@@ -21,6 +21,7 @@ export default function MainLayout({children}) {
           <Navbar />
           <main>{children}</main>
           <Footer />
+          <ToastContainer/>
         </body>
       </html>
     </AuthProvider>
