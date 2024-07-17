@@ -1,18 +1,31 @@
 'use client'
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
 import {usePathname} from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import logo from '@/assets/images/logo-white.png'
 import profileDefault from '@/assets/images/profile.png'
 import {FaGoogle} from 'react-icons/fa'
+import {signIn, signOut, useSession, getProviders} from 'next-auth/react'
+// import UnreadMessageCount from './UnreadMessageCount'
 
 export default function Navbar() {
-  const pathname = usePathname()
+  const {data: session} = useSession()
+  const profileImage = session?.user?.image
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [providers, setProviders] = useState(null)
+  const pathname = usePathname()
 
+  useEffect(() => {
+    const setAuthProviders = async () => {
+      const res = await getProviders()
+      setProviders(res)
+    }
+
+    setAuthProviders()
+  }, [])
+  console.log(profileImage)
   return (
     <nav className='bg-blue-700 border-b border-blue-500'>
       <div className='px-2 mx-auto max-w-7xl sm:px-6 lg:px-8'>
@@ -45,7 +58,7 @@ export default function Navbar() {
                   Properties
                 </Link>
 
-                {isLoggedIn && (
+                {session && (
                   <Link href='/properties/add' className={`${pathname === '/properties/add' ? 'bg-black' : ''} text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2`}>
                     Add Property
                   </Link>
@@ -55,19 +68,21 @@ export default function Navbar() {
           </div>
 
           {/* <!-- Right Side Menu (Logged Out) --> */}
-          {!isLoggedIn && (
+          {!session && (
             <div className='hidden md:block md:ml-6'>
               <div className='flex items-center'>
-                <button className='flex items-center px-3 py-2 text-white bg-gray-700 rounded-md hover:bg-gray-900 hover:text-white'>
-                  <FaGoogle className='mr-2 text-white' />
-                  <span>Login or Register</span>
-                </button>
+                {providers &&
+                  Object.values(providers).map((provider, index) => (
+                    <button onClick={() => signIn(provider.id)} key={index} className='flex items-center text-white bg-gray-700 hover:bg-gray-900 hover:text-white rounded-md px-3 py-2'>
+                      <FaGoogle className='text-white mr-2' />
+                      <span>Login or Register</span>
+                    </button>
+                  ))}
               </div>
             </div>
           )}
-
           {/* <!-- Right Side Menu (Logged In) --> */}
-          {isLoggedIn && (
+          {session && (
             <div className='absolute inset-y-0 right-0 flex items-center pr-2 md:static md:inset-auto md:ml-6 md:pr-0'>
               <Link href='/messages' className='relative group'>
                 <button type='button' className='relative p-1 text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800'>
@@ -86,20 +101,29 @@ export default function Navbar() {
                   <button type='button' className='relative flex text-sm bg-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800' id='user-menu-button' onClick={() => setIsProfileMenuOpen(prev => !prev)} aria-expanded='false' aria-haspopup='true'>
                     <span className='absolute -inset-1.5'></span>
                     <span className='sr-only'>Open user menu</span>
-                    <Image className='w-8 h-8 rounded-full' src={profileDefault} alt='' />
+                    <Image className='w-8 h-8 rounded-full' src={profileImage || profileDefault} width={40} height={40} alt='' />
                   </button>
                 </div>
 
                 {/* <!-- Profile dropdown --> */}
                 {isProfileMenuOpen && (
                   <div id='user-menu' className='absolute right-0 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg z-10w-48 ring-1 ring-black ring-opacity-5 focus:outline-none' role='menu' aria-orientation='vertical' aria-labelledby='user-menu-button' tabIndex='-1'>
-                    <Link href='/profile' className='block whitespace-nowrap px-4 py-2 text-sm text-gray-700' role='menuitem' tabIndex='-1' id='user-menu-item-0'>
+                    <Link href='/profile' onClick={() => setIsProfileMenuOpen(false)} className='block whitespace-nowrap px-4 py-2 text-sm text-gray-700' role='menuitem' tabIndex='-1' id='user-menu-item-0'>
                       Your Profile
                     </Link>
-                    <Link href='/properties/saved' className='block whitespace-nowrap  px-4 py-2 text-sm text-gray-700' role='menuitem' tabIndex='-1' id='user-menu-item-2'>
+                    <Link href='/properties/saved' onClick={() => setIsProfileMenuOpen(false)} className='block whitespace-nowrap  px-4 py-2 text-sm text-gray-700' role='menuitem' tabIndex='-1' id='user-menu-item-2'>
                       Saved Properties
                     </Link>
-                    <button className='block whitespace-nowrap px-4 py-2 text-sm text-gray-700' role='menuitem' tabIndex='-1' id='user-menu-item-2'>
+                    <button
+                      className='block whitespace-nowrap px-4 py-2 text-sm text-gray-700'
+                      role='menuitem'
+                      tabIndex='-1'
+                      id='user-menu-item-2'
+                      onClick={() => {
+                        setIsProfileMenuOpen(false)
+                        signOut()
+                      }}
+                    >
                       Sign Out
                     </button>
                   </div>
@@ -120,19 +144,18 @@ export default function Navbar() {
             <Link href='/properties' className={`${pathname === '/properties' ? 'bg-black' : ''} block text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2`}>
               Properties
             </Link>
-
-            {isLoggedIn && (
+            {session && (
               <Link href='/properties/add' className={`${pathname === '/properties/add' ? 'bg-black' : ''} block text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2`}>
                 Add Property
               </Link>
             )}
-
-            {!isLoggedIn && (
-              <button className='flex items-center px-3 py-2 my-4 text-white bg-gray-700 rounded-md hover:bg-gray-900 hover:text-white'>
-                <FaGoogle className='mr-2 text-white' />
-                <span>Login or Register</span>
-              </button>
-            )}
+            {!session &&
+              providers &&
+              Object.values(providers).map((provider, index) => (
+                <button onClick={() => signIn(provider.id)} key={index} className='flex items-center text-white bg-gray-700 hover:bg-gray-900 hover:text-white rounded-md px-3 py-2'>
+                  <span>Login or Register</span>
+                </button>
+              ))}{' '}
           </div>
         </div>
       )}
